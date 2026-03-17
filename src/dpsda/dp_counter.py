@@ -5,6 +5,30 @@ from collections import Counter
 import torch
 
 
+def _build_faiss_index(public_features, private_features, mode):
+    """Build a FAISS index (GPU if available and faiss-gpu installed, else CPU)."""
+    if mode == 'L2':
+        index = faiss.IndexFlatL2(public_features.shape[1])
+    elif mode == 'IP':
+        index = faiss.IndexFlatIP(public_features.shape[1])
+    elif mode == 'cos_sim':
+        faiss.normalize_L2(public_features)
+        faiss.normalize_L2(private_features)
+        index = faiss.IndexFlatIP(public_features.shape[1])
+    else:
+        raise Exception(f'Unknown mode {mode}')
+
+    use_gpu = False
+    if torch.cuda.is_available():
+        try:
+            faiss_res = faiss.StandardGpuResources()
+            index = faiss.index_cpu_to_gpu(faiss_res, 0, index)
+            use_gpu = True
+        except AttributeError:
+            pass  # faiss-cpu: no GPU APIs
+    return index, use_gpu
+
+
 def dp_nn_histogram(public_features, private_features, noise_multiplier,
                     num_packing=1, num_nearest_neighbor=1, mode='L2',
                     threshold=0.0):
@@ -14,21 +38,7 @@ def dp_nn_histogram(public_features, private_features, noise_multiplier,
     if public_features.shape[0] == 0:  # TODO debug, why this case exists
         return np.zeros(shape=num_true_public_features), np.zeros(shape=num_true_public_features)
 
-    faiss_res = faiss.StandardGpuResources()
-    if mode == 'L2':
-        index = faiss.IndexFlatL2(public_features.shape[1])
-    # inner product; need normalization (https://github.com/spotify/annoy)
-    elif mode == 'IP':
-        index = faiss.IndexFlatIP(public_features.shape[1])
-    elif mode == 'cos_sim':
-        # normalize the embeddings first
-        faiss.normalize_L2(public_features)
-        faiss.normalize_L2(private_features)
-        index = faiss.IndexFlatIP(public_features.shape[1])
-    else:
-        raise Exception(f'Unknown mode {mode}')
-    if torch.cuda.is_available():
-        index = faiss.index_cpu_to_gpu(faiss_res, 0, index)
+    index, use_gpu = _build_faiss_index(public_features, private_features, mode)
 
     # logging.info(f'public_features shape : {public_features.shape}')
     # logging.info(f'private_features shape : {private_features.shape}')

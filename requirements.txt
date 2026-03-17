@@ -2,7 +2,7 @@ torch
 transformers
 accelerate
 sentence-transformers
-faiss-cpu
+faiss-gpu-cu12
 datasets
 scipy
 numpy

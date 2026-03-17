@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+/tmp/python-venv/pe-venv/
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (download via install script / scripts/download_data.sh)
+data/
+
+# Experiment outputs
+result/
+
+# Embeddings (regenerate via scripts/embeddings.sh)
+*.embeddings.npz
+
+# HuggingFace cache
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Wandb
+wandb/
+
+# Environment
+.env
+*.log

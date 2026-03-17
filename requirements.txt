@@ -15,4 +15,5 @@ nltk
 matplotlib
 seaborn
 ipykernel
+ipywidgets
 evaluate

@@ -1,0 +1,9 @@
+# Downstream classification task for Yelp
+type: classification
+model_name: roberta-base
+max_seq_length: 512
+batch_size: 32
+learning_rate: 3e-5
+num_epochs: 5
+label_column: label2
+clean_dataset: true

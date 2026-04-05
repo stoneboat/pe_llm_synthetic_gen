@@ -1,0 +1,9 @@
+# Original AUG-PE mechanism (Algorithm 1 from ICLR 2024 paper)
+type: original_aug_pe
+
+# These are defaults; experiment configs can override any of them.
+select_syn_mode: rank
+save_syn_mode: selected
+nn_mode: L2
+num_nearest_neighbor: 1
+count_threshold: 0.0

@@ -1,0 +1,49 @@
+# Yelp + Original AUG-PE mechanism (DP, epsilon=1.0)
+#
+# Reproduces the Yelp GPT-2 DP configuration with epsilon=1.0.
+
+name: yelp_original_dp_eps1
+seed: 42
+result_folder: result/yelp/original_dp_eps1
+
+dataset:
+  _include: configs/datasets/yelp.yaml
+
+mechanism:
+  _include: configs/mechanisms/original_aug_pe.yaml
+
+api:
+  type: HFGPT
+  model_type: gpt2
+  temperature: 1.4
+  max_new_tokens: 64
+  top_k: 50
+  top_p: 0.9
+  repetition_penalty: 1.0
+  do_sample: true
+  fp16: true
+  use_subcategory: true
+  random_sampling_batch_size: 1024
+  variation_batch_size: 1024
+  variation_type: yelp_rephrase_tone
+  mlm_probability: 0.5
+
+# Privacy parameters (epsilon=1.0 -> sigma=15.34)
+noise_multiplier: 15.34
+
+# PE loop (DP uses T=10)
+num_iterations: 10
+num_syn_samples: 5000
+L: 7
+init_L: 7
+lookahead_degree: 0
+select_syn_mode: rank
+variation_degree: 0.5
+
+feature_extractor: stsb-roberta-base-v2
+feature_extractor_batch_size: 1024
+
+tasks:
+  - _include: configs/tasks/embedding_metrics.yaml
+    embedding_model: stsb-roberta-base-v2
+  - _include: configs/tasks/classification_yelp.yaml

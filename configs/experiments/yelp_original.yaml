@@ -1,0 +1,59 @@
+# Yelp + Original AUG-PE mechanism (non-DP baseline)
+#
+# Reproduces the Yelp GPT-2 non-DP configuration from the paper.
+# Usage:
+#   python -m src.cli.generate --config configs/experiments/yelp_original.yaml
+#   python -m src.cli.evaluate --config configs/experiments/yelp_original.yaml
+#   python -m src.cli.downstream --config configs/experiments/yelp_original.yaml
+
+name: yelp_original_non_dp
+seed: 42
+result_folder: result/yelp/original_non_dp
+
+# Dataset
+dataset:
+  _include: configs/datasets/yelp.yaml
+
+# Mechanism
+mechanism:
+  _include: configs/mechanisms/original_aug_pe.yaml
+
+# API / model
+api:
+  type: HFGPT
+  model_type: gpt2
+  temperature: 1.4
+  max_new_tokens: 64
+  top_k: 50
+  top_p: 0.9
+  repetition_penalty: 1.0
+  do_sample: true
+  fp16: true
+  use_subcategory: true
+  random_sampling_batch_size: 1024
+  variation_batch_size: 1024
+  variation_type: yelp_rephrase_tone
+  mlm_probability: 0.5
+
+# Privacy parameters (non-DP)
+noise_multiplier: 0.0
+
+# PE loop
+num_iterations: 20
+num_syn_samples: 5000
+L: 7
+init_L: 7
+lookahead_degree: 0
+select_syn_mode: rank
+variation_degree: 0.5
+compute_fid: true
+
+# Feature extractor
+feature_extractor: stsb-roberta-base-v2
+feature_extractor_batch_size: 1024
+
+# Evaluation tasks
+tasks:
+  - _include: configs/tasks/embedding_metrics.yaml
+    embedding_model: stsb-roberta-base-v2
+  - _include: configs/tasks/classification_yelp.yaml

@@ -18,3 +18,4 @@ seaborn
 ipykernel
 ipywidgets
 evaluate==0.4.1
+pyyaml

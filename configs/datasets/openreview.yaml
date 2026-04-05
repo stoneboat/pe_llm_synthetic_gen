@@ -1,0 +1,9 @@
+# OpenReview dataset configuration
+name: openreview
+train_data_file: data/openreview/iclr23_reviews_train.csv
+dev_data_file: ""
+test_data_file: ""
+embedding_model: stsb-roberta-base-v2
+embeddings_file: result/embeddings/stsb-roberta-base-v2/openreview_train_all.embeddings.npz
+variation_type: openreview_rephrase_tone
+subcategory_source: data/openreview/writers.txt

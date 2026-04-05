@@ -1,0 +1,48 @@
+# PubMed + Original AUG-PE mechanism (non-DP baseline)
+#
+# Reproduces the PubMed GPT-2 non-DP configuration from the paper.
+
+name: pubmed_original_non_dp
+seed: 42
+result_folder: result/pubmed/original_non_dp
+
+dataset:
+  _include: configs/datasets/pubmed.yaml
+
+mechanism:
+  _include: configs/mechanisms/original_aug_pe.yaml
+
+api:
+  type: HFGPT
+  model_type: gpt2
+  temperature: 1.0
+  max_new_tokens: 448
+  top_k: 50
+  top_p: 0.9
+  repetition_penalty: 1.0
+  do_sample: true
+  fp16: true
+  use_subcategory: true
+  random_sampling_batch_size: 128
+  variation_batch_size: 128
+  variation_type: pubmed_rephrase_tone
+  mlm_probability: 0.6
+
+# Privacy parameters (non-DP)
+noise_multiplier: 0.0
+
+# PE loop
+num_iterations: 10
+num_syn_samples: 2000
+L: 7
+init_L: 7
+lookahead_degree: 0
+select_syn_mode: rank
+variation_degree: 0.6
+
+feature_extractor: sentence-t5-base
+feature_extractor_batch_size: 1024
+
+tasks:
+  - _include: configs/tasks/embedding_metrics.yaml
+    embedding_model: sentence-t5-base

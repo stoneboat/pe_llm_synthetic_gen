@@ -1,0 +1,9 @@
+# PubMed dataset configuration
+name: pubmed
+train_data_file: data/pubmed/train.csv
+dev_data_file: data/pubmed/dev.csv
+test_data_file: data/pubmed/test.csv
+embedding_model: sentence-t5-base
+embeddings_file: result/embeddings/sentence-t5-base/pubmed_train_all.embeddings.npz
+variation_type: pubmed_rephrase_tone
+subcategory_source: data/pubmed/writers.txt

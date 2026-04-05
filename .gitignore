@@ -19,6 +19,8 @@ env/
 *.swo
 *~
 
+.codex 
+
 # OS
 .DS_Store
 Thumbs.db

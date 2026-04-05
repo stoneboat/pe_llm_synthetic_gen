@@ -1,9 +1,10 @@
 torch
-transformers
-accelerate
-sentence-transformers
+transformers==4.30.2
+accelerate==0.21.0
+sentence-transformers==2.2.2
+huggingface_hub==0.16.4
 faiss-gpu-cu12
-datasets
+datasets==2.14.7
 scipy
 numpy
 scikit-learn
@@ -16,4 +17,4 @@ matplotlib
 seaborn
 ipykernel
 ipywidgets
-evaluate
+evaluate==0.4.1

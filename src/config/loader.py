@@ -106,6 +106,10 @@ class ExperimentConfig:
     wandb_key: str = ""
     project: str = "text-API"
 
+    # PE top-k parameters (only used when mechanism type is pe_top_k)
+    threshold_H: float = 0.0
+    k_top_schedule: Any = field(default_factory=list)  # list[int], single int, or csv string
+
     # Computed schedules (populated by finalize())
     num_samples_schedule: List[int] = field(default_factory=list)
     variation_degree_schedule: List[float] = field(default_factory=list)
@@ -152,6 +156,15 @@ class ExperimentConfig:
         mech.setdefault("variation_degree_schedule", self.variation_degree_schedule)
         mech.setdefault("feature_extractor", self.feature_extractor)
         mech.setdefault("feature_extractor_batch_size", self.feature_extractor_batch_size)
+
+        # PE top-k specific fields (only meaningful for pe_top_k mechanism,
+        # harmless for other mechanisms since they ignore unknown keys).
+        if self.threshold_H != 0.0:
+            mech.setdefault("threshold_H", self.threshold_H)
+        if self.k_top_schedule:
+            mech.setdefault("k_top_schedule",
+                            _parse_schedule(self.k_top_schedule,
+                                            self.num_iterations, int))
 
         # Disable wandb if no key
         if not self.wandb_key:

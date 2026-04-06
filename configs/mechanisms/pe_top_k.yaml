@@ -1,0 +1,19 @@
+# PE with annealed top-k post-processing (Algorithm 2)
+type: pe_top_k
+
+# Elementwise threshold H subtracted from noisy counts before top-k selection.
+# Higher H is more aggressive noise suppression.
+threshold_H: 0.0
+
+# Per-round top-k values.  Accepts:
+#   - a single integer (broadcast to all rounds)
+#   - a list of integers (one per round, length = num_iterations + 1)
+# The "annealed" aspect: start large, shrink over rounds to focus selection.
+# k_top_schedule must be provided in the experiment config.
+
+# Common defaults (inherited from original_aug_pe baseline)
+select_syn_mode: rank
+save_syn_mode: selected
+nn_mode: L2
+num_nearest_neighbor: 1
+count_threshold: 0.0

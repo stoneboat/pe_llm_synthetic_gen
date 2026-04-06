@@ -6,6 +6,7 @@ from .base import Mechanism
 # The class is registered via decorator when first imported.
 def _ensure_registered():
     from .original_aug_pe import OriginalAugPEMechanism  # noqa: F401
+    from .pe_top_k import PETopKMechanism  # noqa: F401
 
 _ensure_registered()
 

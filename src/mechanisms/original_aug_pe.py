@@ -43,6 +43,16 @@ class OriginalAugPEMechanism(Mechanism):
         )
         return samples, labels, sync_counter
 
+    def _validate_counts(self, counts: np.ndarray, class_name: str) -> None:
+        """Check that DP histogram produced usable counts.
+
+        Subclasses may relax this (e.g. PETopKMechanism handles all-zero via fallback).
+        """
+        assert np.sum(counts) > 0, (
+            f"All DP histogram counts are zero for class '{class_name}'. "
+            "This can happen with very high noise. Consider reducing noise_multiplier."
+        )
+
     def compute_weights(self, noisy_counts: np.ndarray, t: int) -> np.ndarray:
         """Original mechanism: return noisy counts as-is.
 
@@ -175,7 +185,7 @@ class OriginalAugPEMechanism(Mechanism):
                     mode=self.nn_mode,
                     threshold=self.count_threshold,
                 )
-                assert np.sum(sub_count) > 0
+                self._validate_counts(sub_count, class_)
 
                 count_per_class[class_] = (sub_count, sub_clean_count)
 

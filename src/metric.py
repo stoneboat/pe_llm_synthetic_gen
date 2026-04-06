@@ -11,6 +11,9 @@ import os
 import torch
 import argparse
 import csv
+from st_compat import ensure_sentence_transformers_compat
+
+ensure_sentence_transformers_compat()
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 from datasets import load_dataset

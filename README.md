@@ -2,7 +2,7 @@
 
 Reproduction of the paper ["Differentially Private Synthetic Data via Foundation Model APIs 2: Text"](https://arxiv.org/abs/2403.01749) (Xie et al., ICML 2024 Spotlight).
 
-The core algorithm code is from the [original authors' repository](https://github.com/AI-secure/aug-pe), reorganized with all Python source under `src/`. This repo adds environment setup for an NVIDIA L40S GPU, configuration dataclasses, privacy accounting utilities, and a step-by-step demo notebook.
+The core algorithm code is from the [original authors' repository](https://github.com/AI-secure/aug-pe), reorganized under `src/`. The repository now includes a config-driven experiment framework with YAML configs and CLI entry points under `src/cli/`, while preserving the original `src/main.py` pipeline for backward compatibility.
 
 ## Quick Start
 
@@ -14,20 +14,80 @@ bash scripts/local_scripts/install_gpu.sh
 source /tmp/python-venv/pe-venv/bin/activate
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 export TOKENIZERS_PARALLELISM=false
+export PYTHONPATH=src:.
 
 # 3. Precompute private data embeddings (~40 min for full Yelp)
 bash scripts/embeddings.sh --yelp
 
 # 4. Run AUG-PE generation (GPT-2, Yelp, non-DP, 20 iterations)
 export CUDA_VISIBLE_DEVICES=0
-bash scripts/hf/yelp/generate.sh
+python -m src.cli.generate --config configs/experiments/yelp_original.yaml
 
 # 5. Evaluate downstream classification accuracy
-bash scripts/hf/yelp/downstream.sh
+python -m src.cli.downstream --config configs/experiments/yelp_original.yaml
 
 # 6. Compute embedding distribution metrics (FID, precision, recall)
-bash scripts/hf/yelp/metric.sh
+python -m src.cli.evaluate --config configs/experiments/yelp_original.yaml
 ```
+
+## Primary Commands
+
+The recommended interface is the YAML-driven CLI.
+
+### Generate synthetic text
+
+Non-DP Yelp:
+
+```bash
+PYTHONPATH=src:. python -m src.cli.generate --config configs/experiments/yelp_original.yaml
+```
+
+DP Yelp (`epsilon = 1`, `sigma = 15.34`):
+
+```bash
+PYTHONPATH=src:. python -m src.cli.generate --config configs/experiments/yelp_original_dp_eps1.yaml
+```
+
+### Evaluate saved generations
+
+All available iterations:
+
+```bash
+PYTHONPATH=src:. python -m src.cli.evaluate --config configs/experiments/yelp_original.yaml
+PYTHONPATH=src:. python -m src.cli.downstream --config configs/experiments/yelp_original.yaml
+```
+
+Single iteration, for example iteration `10`:
+
+```bash
+PYTHONPATH=src:. python -m src.cli.evaluate --config configs/experiments/yelp_original.yaml --iteration 10
+PYTHONPATH=src:. python -m src.cli.downstream --config configs/experiments/yelp_original.yaml --iteration 10
+```
+
+### CLI overrides
+
+```bash
+PYTHONPATH=src:. python -m src.cli.generate \
+  --config configs/experiments/yelp_original.yaml \
+  --override noise_multiplier=15.34 seed=123
+```
+
+## Config-Driven Framework
+
+The new framework separates:
+
+- `src/data_adapters/` for dataset loading and labeling
+- `src/mechanisms/` for generation mechanisms
+- `src/tasks/` for evaluation tasks
+- `src/config/` for YAML loading
+- `src/cli/` for runnable entry points
+
+Reusable configs live under:
+
+- `configs/datasets/`
+- `configs/mechanisms/`
+- `configs/tasks/`
+- `configs/experiments/`
 
 ## Repository Structure
 
@@ -35,13 +95,27 @@ bash scripts/hf/yelp/metric.sh
 ├── README.md
 ├── requirements.txt
 ├── LICENSE
-├── paper/                               # Reference PDF
+├── paper/                               # Reports and reference PDFs
+├── configs/                             # YAML experiment configs
+│   ├── datasets/
+│   ├── mechanisms/
+│   ├── tasks/
+│   └── experiments/
 │
-├── src/                                 # All Python source code
-│   ├── main.py                          #   Core AUG-PE entry point
-│   ├── metric.py                        #   Distribution metrics entry point
+├── src/                                 # Python source code
+│   ├── cli/                             #   Config-driven entry points
+│   │   ├── generate.py
+│   │   ├── evaluate.py
+│   │   └── downstream.py
+│   ├── data_adapters/                   #   Dataset adapters
+│   ├── mechanisms/                      #   Mechanism implementations
+│   ├── tasks/                           #   Evaluation tasks
+│   ├── config/                          #   YAML config loader
+│   ├── registry.py                      #   Registry pattern
+│   ├── main.py                          #   Original monolithic entry point (preserved)
+│   ├── metric.py                        #   Legacy distribution metrics entry point
 │   ├── pre_comp_emb.py                  #   Precompute embeddings
-│   ├── config.py                        #   Dataclass configs (paper hyperparameters)
+│   ├── legacy_config.py                 #   Legacy dataclass configs
 │   ├── dp_accounting.py                 #   Privacy budget computation (Theorem 2)
 │   ├── apis/                            #   LLM generation APIs
 │   │   ├── hf_api.py                    #     HuggingFace GPT-2 (RANDOM_API + VARIATION_API)
@@ -51,22 +125,20 @@ bash scripts/hf/yelp/metric.sh
 │   │   ├── feature_extractor.py         #     Sentence-transformer embeddings
 │   │   ├── data_loader.py               #     Dataset loading
 │   │   └── logging.py                   #     Sample saving, FID logging
-│   └── utility_eval/                    #   Downstream evaluation
-│       └── run_classification.py        #     RoBERTa text classification
+│   └── utility_eval/                    #   Legacy downstream evaluation scripts
 │
 ├── data/
-│   ├── yelp/                            #   Yelp reviews (train.csv downloaded separately)
-│   └── pubmed/                          #   PubMed abstracts
+│   ├── yelp/                            #   Yelp reviews
+│   ├── pubmed/                          #   PubMed abstracts
+│   └── openreview/                      #   OpenReview reviews
 │
-├── scripts/
-│   ├── local_scripts/install_gpu.sh     # Environment setup
-│   ├── local_scripts/sanity_check.sh    # Quick validation run
-│   ├── hf/yelp/generate.sh              # AUG-PE generation (GPT-2 + Yelp)
-│   ├── hf/yelp/downstream.sh            # Downstream evaluation
-│   ├── hf/yelp/metric.sh                # FID / precision / recall
-│   ├── hf/pubmed/                       # PubMed experiment scripts
-│   ├── embeddings.sh                    # Embedding precomputation
-│   └── download_data.sh                 # Dataset download helper
+├── scripts/                             # Legacy helper scripts (preserved)
+│   ├── local_scripts/install_gpu.sh
+│   ├── local_scripts/sanity_check.sh
+│   ├── hf/yelp/
+│   ├── hf/pubmed/
+│   ├── embeddings.sh
+│   └── download_data.sh
 │
 └── Notebook/demo.ipynb                  # Step-by-step Python walkthrough
 ```
@@ -84,7 +156,9 @@ AUG-PE generates differentially private synthetic text using only inference API 
    - Combine selected samples + variations for next iteration
 3. **Output**: The selected samples from the final iteration
 
-Privacy is ensured by adding Gaussian noise to the histogram at each iteration. The total privacy cost composes over T iterations via the adaptive composition theorem for Gaussian mechanisms.
+Privacy is ensured by adding Gaussian noise to the histogram at each iteration. The total privacy cost composes over `T` iterations via the adaptive composition theorem for Gaussian mechanisms.
+
+In the new framework, the original algorithm is represented by the `original_aug_pe` mechanism and configured through YAML experiment files such as [`configs/experiments/yelp_original.yaml`](/home/ubuntu/pe_llm_synthetic_gen/configs/experiments/yelp_original.yaml) and [`configs/experiments/yelp_original_dp_eps1.yaml`](/home/ubuntu/pe_llm_synthetic_gen/configs/experiments/yelp_original_dp_eps1.yaml).
 
 ## Key Hyperparameters (Yelp + GPT-2)
 
@@ -112,6 +186,17 @@ sigma = compute_sigma(epsilon=1.0, T=10, delta=1/(1939290 * math.log(1939290)))
 ## Hardware
 
 Tested on NVIDIA L40S (46 GB VRAM). GPT-2 in FP16 uses ~0.5 GB, leaving ample room for embeddings and nearest-neighbor search.
+
+## Backward Compatibility
+
+The original entry point is still preserved:
+
+```bash
+cd src
+python main.py --api HFGPT --dataset yelp ...
+```
+
+The YAML-driven CLI is now the recommended interface for new runs.
 
 ## Citation
 

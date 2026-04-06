@@ -39,6 +39,9 @@ class EmbeddingMetricsTask(UtilityTask):
         """Run embedding-based metrics on synthetic data."""
         import numpy as np
         import torch
+        from st_compat import ensure_sentence_transformers_compat
+
+        ensure_sentence_transformers_compat()
         from sentence_transformers import SentenceTransformer
         from datasets import load_dataset
         from tqdm import tqdm

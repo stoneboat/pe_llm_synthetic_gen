@@ -1,6 +1,9 @@
 import numpy as np
 from tqdm import tqdm
 import torch
+from st_compat import ensure_sentence_transformers_compat
+
+ensure_sentence_transformers_compat()
 from sentence_transformers import SentenceTransformer
 
 # https://github.com/UKPLab/sentence-transformer

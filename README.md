@@ -15,6 +15,7 @@ source /tmp/python-venv/pe-venv/bin/activate
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 export TOKENIZERS_PARALLELISM=false
 export PYTHONPATH=src:.
+export LD_LIBRARY_PATH="/tmp/python-venv/pe-venv/lib/python3.10/site-packages/nvidia/cu13/lib:${LD_LIBRARY_PATH}"
 
 # 3. Precompute private data embeddings (~40 min for full Yelp)
 bash scripts/embeddings.sh --yelp
@@ -47,6 +48,8 @@ DP Yelp (`epsilon = 1`, `sigma = 15.34`):
 ```bash
 PYTHONPATH=src:. python -m src.cli.generate --config configs/experiments/yelp_original_dp_eps1.yaml
 ```
+
+If you see `nvrtc: error: failed to open libnvrtc-builtins.so.13.0`, your shell is usually picking up system CUDA libraries before the venv's bundled CUDA 13 runtime. Export the venv CUDA library path shown above before running the CLI.
 
 ### Evaluate saved generations
 
